@@ -25,18 +25,19 @@ class TelegramBotService : TelegramLongPollingBot() {
 
     override fun onUpdateReceived(update: Update?) {
         if (update != null) {
-            if (update.hasMessage())
-            val  message:Message = update.message
-            val chatId = message.chatId
-            val responseText = if (message.hasText()) {
-                when (val messageText = message.text) {
-                    "/start" -> "Добро пожаловать!"
-                    else -> "Вы написали :$messageText"
+            if (update.hasMessage()) {
+                val message = update.message
+                val chatId = message.chatId
+                val responseText = if (message.hasText()) {
+                    when (val messageText = message.text) {
+                        "/start" -> "Добро пожаловать!"
+                        else -> "Вы написали :$messageText"
+                    }
+                } else {
+                    "Я понимаю только текст"
                 }
-            }else{
-                "Я понимаю только текст"
+                sendNotification(chatId, responseText)
             }
-            sendNotification(chatId,responseText)
         }
     }
     private fun sendNotification(chatId:Long,responseText:String){
