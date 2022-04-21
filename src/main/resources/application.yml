@@ -1,11 +1,9 @@
 bot:
   username: search on youtube
-#  token: 5362160529:AAEWtcrntubP1MgiBDogWY6fK2n3zCPOzZ8
   token: 5320131110:AAH_SsMu7nFtpPNd3EYOtgj_wAQvc3uuHtc
 
-
-#spring:
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/kotlin_template
-#    username: postgres
-#    password: postgres
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres

@@ -13,8 +13,29 @@ class TelegramBotService(
     private val botName: String,
 
     @Value("\${bot.token}")
-    private val botToken: String
+    private val botToken: String,
+
+    private val wordService: WordService
 ) : TelegramLongPollingBot() {
+
+//    https://www.youtube.com/results?search_query=one+two
+//    https://www.youtube.com/results?search_query=google-one
+    // one 2
+    // two 1
+    // google 1
+
+    /**
+     * music
+     * car
+     * music
+     * car
+     * music
+     *
+     * 5 -> music: 3, car: 2
+     *
+     * music: 3
+     * car: 2
+     */
 
     override fun getBotToken() = botToken
 
@@ -34,10 +55,15 @@ class TelegramBotService(
                 sendNotification(chatId, "Я понимаю только текст")
             }
 
-            val responseText = when (message.text) {
+            val messageText = message.text
+
+            val responseText = when (messageText) {
                 "/start" -> "Добро пожаловать"
-                else -> "Вы написали: ${message.text}"
+                "/stats" -> wordService.getStats()
+                else -> "Вы написали: ${messageText}"
             }
+
+            wordService.saveWords(messageText.split("\\s+".toRegex()))
 
             sendNotification(chatId, responseText)
         }
@@ -47,7 +73,7 @@ class TelegramBotService(
         val command = SendMessage().also {
             it.chatId = chatId.toString()
             it.text = responseText
-            it.enableMarkdown(true)
+//            it.enableMarkdown(true)
         }
 
         execute(command)
