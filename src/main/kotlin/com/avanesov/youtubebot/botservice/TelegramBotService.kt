@@ -4,18 +4,20 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 
 
 @Service
-class TelegramBotService : TelegramLongPollingBot() {
+class TelegramBotService(
 
-    @Value("\${bot.username}")
-    private val botName = ""
+    @Value("\${app.bot.username}")
+    private val botName: String,
 
-    @Value("\${bot.token}")
-    private val botToken = ""
+    @Value("\${app.bot.token}")
+    private val botToken: String,
+    private val wordService: WordService
+
+) : TelegramLongPollingBot() {
 
 
     override fun getBotToken(): String = botToken
@@ -24,25 +26,38 @@ class TelegramBotService : TelegramLongPollingBot() {
     override fun getBotUsername(): String = botName
 
     override fun onUpdateReceived(update: Update?) {
-        if (update != null) {
-            if (update.hasMessage()) {
-                val message = update.message
-                val chatId = message.chatId
-                val responseText = if (message.hasText()) {
-                    when (val messageText = message.text) {
-                        "/start" -> "Добро пожаловать!"
-                        else -> "Вы написали :$messageText"
-                    }
-                } else {
-                    "Я понимаю только текст"
-                }
-                sendNotification(chatId, responseText)
+        if (update == null) {
+            return
+        }
+
+        if (update.hasMessage()) {
+            val message = update.message
+
+            val chatId = message.chatId
+
+            if (!message.hasText()) {
+                sendNotification(chatId, "Я понимаю только текст")
             }
+
+            val messageText = message.text
+
+            val responseText = when (messageText) {
+                "/start" -> "Добро пожаловать"
+                "/stats" -> wordService.getStats()
+                else -> "Вы написали: $messageText"
+            }
+
+            wordService.saveWord(messageText.split("\\s+".toRegex()))
+
+            sendNotification(chatId, responseText)
         }
     }
-    private fun sendNotification(chatId:Long,responseText:String){
-        val responseMessage = SendMessage(chatId.toString(),responseText)
-        responseMessage.enableMarkdownV2(true)
+
+    private fun sendNotification(chatId: Long, responseText: String) {
+        val responseMessage = SendMessage().also {
+            it.chatId = chatId.toString()
+            it.text = responseText
+        }
         execute(responseMessage)
     }
 }
